@@ -1,7 +1,15 @@
-from flask import Flask, request, render_template_string, session, redirect, url_for
+from flask import Flask, request, render_template_string, session, redirect, url_for, Response
 import sqlite3
 import os
 import hashlib
+
+try:
+    from werkzeug.serving import WSGIRequestHandler
+    WSGIRequestHandler.server_version = "WebServer"
+    WSGIRequestHandler.sys_version = ""
+except Exception:
+    pass
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
@@ -17,9 +25,73 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 
+@app.after_request
+def set_security_headers(response):
+    # CORRECCIÓN OWASP ZAP: Content Security Policy Header Not Set
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
+    )
+
+    # CORRECCIÓN OWASP ZAP: Missing Anti-clickjacking Header
+    response.headers["X-Frame-Options"] = "DENY"
+
+    # CORRECCIÓN OWASP ZAP: X-Content-Type-Options Header Missing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # CORRECCIÓN OWASP ZAP: Permissions Policy Header Not Set
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self)"
+    )
+
+    # CORRECCIÓN OWASP ZAP: Cross-Origin headers missing
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+
+    # CORRECCIÓN OWASP ZAP: Storable and Cacheable Content
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
+    # CORRECCIÓN OWASP ZAP: Server Leaks Version Information
+    response.headers.pop("Server", None)
+
+    return response
+
+
 @app.route('/')
 def index():
     return 'Welcome to the Task Manager Application!'
+
+
+@app.route('/robots.txt')
+def robots_txt():
+    return Response(
+        "User-agent: *\nDisallow:\n",
+        mimetype="text/plain"
+    )
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    return Response(
+        '''<?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            <url>
+                <loc>http://ev3-app:5000/</loc>
+            </url>
+        </urlset>
+        ''',
+        mimetype="application/xml"
+    )
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -85,7 +157,7 @@ def dashboard():
                 {{ task['task'] }}
 
                 <!-- CORRECCIÓN ADICIONAL: la eliminación se realiza mediante método POST -->
-                <form action="/delete_task/{{ task['id'] }}" method="post" style="display:inline;">
+                <form action="/delete_task/{{ task['id'] }}" method="post">
                     <button type="submit">Delete</button>
                 </form>
             </li>
