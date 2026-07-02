@@ -30,11 +30,11 @@ def login():
 
         conn = get_db_connection()
 
-        # MITIGACIÓN 1: SQL Injection
+        # CORRECCIÓN CWE-89: SQL Injection
         # Se elimina la consulta SQL construida con f-string.
-        # Ahora se usa una consulta parametrizada.
+        # Se utiliza una consulta parametrizada para evitar que los datos del usuario
+        # sean interpretados como parte de la sentencia SQL.
         hashed_password = hash_password(password)
-
         query = "SELECT * FROM users WHERE username = ? AND password = ?"
         user = conn.execute(query, (username, hashed_password)).fetchone()
 
@@ -84,7 +84,7 @@ def dashboard():
             <li>
                 {{ task['task'] }}
 
-                <!-- MITIGACIÓN 2: eliminación mediante método POST -->
+                <!-- CORRECCIÓN ADICIONAL: la eliminación se realiza mediante método POST -->
                 <form action="/delete_task/{{ task['id'] }}" method="post" style="display:inline;">
                     <button type="submit">Delete</button>
                 </form>
@@ -120,7 +120,8 @@ def delete_task(task_id):
 
     conn = get_db_connection()
 
-    # MITIGACIÓN 3: la tarea solo se elimina si pertenece al usuario autenticado.
+    # CORRECCIÓN ADICIONAL:
+    # Solo se elimina la tarea si pertenece al usuario autenticado.
     conn.execute(
         "DELETE FROM tasks WHERE id = ? AND user_id = ?",
         (task_id, session['user_id'])
@@ -141,5 +142,6 @@ def admin():
 
 
 if __name__ == '__main__':
-    # MITIGACIÓN 4: debug desactivado.
+    # CORRECCIÓN CWE-94: debug=True en Flask
+    # Se desactiva el modo debug para evitar exposición del debugger.
     app.run(host='0.0.0.0', port=5000, debug=False)
