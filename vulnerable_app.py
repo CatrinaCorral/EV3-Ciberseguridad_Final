@@ -144,4 +144,4 @@ def admin():
 if __name__ == '__main__':
     # CORRECCIÓN CWE-94: debug=True en Flask
     # Se desactiva el modo debug para evitar exposición del debugger.
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(port=5000, debug=False)
