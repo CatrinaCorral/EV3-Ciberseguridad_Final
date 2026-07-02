@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template_string, session, redirect, url_for, Response
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 import sqlite3
 import os
 import hashlib
@@ -13,6 +14,15 @@ except Exception:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
+
+
+# MÉTRICA PROMETHEUS:
+# Cuenta la cantidad total de peticiones HTTP recibidas por la aplicación Flask.
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Cantidad total de peticiones HTTP recibidas por la aplicación Flask',
+    ['method', 'endpoint', 'status']
+)
 
 
 def get_db_connection():
@@ -64,6 +74,16 @@ def set_security_headers(response):
     # CORRECCIÓN OWASP ZAP: Server Leaks Version Information
     response.headers.pop("Server", None)
 
+    # MÉTRICA PROMETHEUS:
+    # Registra método HTTP, endpoint y código de estado de cada respuesta.
+    endpoint_name = request.endpoint or request.path
+
+    REQUEST_COUNT.labels(
+        request.method,
+        endpoint_name,
+        str(response.status_code)
+    ).inc()
+
     return response
 
 
@@ -92,6 +112,17 @@ def sitemap_xml():
         ''',
         mimetype="application/xml"
     )
+
+
+@app.route('/metrics')
+def metrics():
+    """
+    Endpoint para proporcionar métricas.
+
+    Retorna:
+        Métricas en formato compatible con Prometheus.
+    """
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 
 @app.route('/login', methods=['GET', 'POST'])
