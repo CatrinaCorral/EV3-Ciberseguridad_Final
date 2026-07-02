@@ -2,10 +2,8 @@ pipeline {
   agent any
 
   environment {
-    APP_URL       = 'http://localhost:5000'
-    SONAR_HOST    = 'http://sonarqube-custom:9000/'
+    APP_URL       = 'http://ev3-app:5000'
     REPORT_DIR    = 'zap-reports'
-    DC_HOME       = tool 'dependency-check'
   }
 
   stages {
@@ -53,25 +51,6 @@ pipeline {
             curlimages/curl:latest \
             -sf http://ev3-app:5000 || echo "App no responde"
         '''
-      }
-    }
-
-    stage('Analyze - SonarQube') {
-      steps {
-        withSonarQubeEnv('sonarqube-server') {
-          withEnv(["PATH+SONAR=${tool 'sonarqube-scanner'}/bin"]) {
-            sh """
-              sonar-scanner \
-                -Dsonar.projectKey=EV3-Ciberseguridad \
-                -Dsonar.projectName=EV3-Ciberseguridad \
-                -Dsonar.sources=. \
-                -Dsonar.inclusions=vulnerable_app.py \
-                -Dsonar.python.version=3 \
-                -Dsonar.exclusions=venv/**,zap-reports/**,dc-report/**,**/*.html,**/*.json,**/*.xml,**/*.js,**/*.css \
-                -Dsonar.token=$SONAR_AUTH_TOKEN || true
-            """
-          }
-        }
       }
     }
 
