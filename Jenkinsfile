@@ -147,42 +147,58 @@ pipeline {
       }
     }
 
-    stage('Generate Documentation') {
+    stage('Trazabilidad y Documentacion') {
       steps {
         sh '''
           mkdir -p ${WORKSPACE}/docs-report
+          F=${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
 
-          echo "==============================================" >  ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "# Trazabilidad de Seguridad - Build #${BUILD_NUMBER}" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "Fecha: $(date)" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "Commit: ${GIT_COMMIT}" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "## Etapas ejecutadas en este build" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- Build: imagen ev3-ciberseguridad_final:${BUILD_NUMBER} construida" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- Test - Unit: resultados en results.xml" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- Deploy - Staging: contenedor desplegado en devsecops-network" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- Security Test - SCA Dependencies: ver dependency-check-report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- Security Test - DAST ZAP: ver zap_report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "## Gestion de dependencias (snapshot de requirements.txt en este build)" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          cat ${WORKSPACE}/requirements.txt | sed 's/^/- /' >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "## Documentacion asociada del repositorio" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- DEPENDENCY_MANAGEMENT.md" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "- SDLC_SECURITY_DOCUMENTATION.md" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-          echo "==============================================" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          cat > "$F" << EOF
+# Registro de Trazabilidad - Build #${BUILD_NUMBER}
 
-          cat ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
-        '''
-      }
-    }
+## Informacion del Build
+- **Numero de Build:** ${BUILD_NUMBER}
+- **Fecha de ejecucion:** $(date +"%Y-%m-%d %H:%M:%S")
+- **Job:** ${JOB_NAME}
 
-    stage('Version Control - Docs') {
-      steps {
-        sh '''
-          echo "=== Versionando documentacion generada para build #${BUILD_NUMBER} ==="
-          ls -la ${WORKSPACE}/docs-report/
-          echo "El archivo de trazabilidad queda archivado como artefacto versionado por numero de build."
+## Control de Versiones (Git)
+- **Commit:** ${GIT_COMMIT}
+- **Repositorio:** https://github.com/CatrinaCorral/EV3-Ciberseguridad_Final
+
+## Etapas Ejecutadas
+1. Build: construccion de imagen Docker ev3-ciberseguridad_final:${BUILD_NUMBER} - EXITOSA
+2. Test - Unit: ejecucion de pruebas unitarias (pytest) - EXITOSA
+3. Deploy - Staging: despliegue del contenedor en devsecops-network - EXITOSA
+4. Security Test - SCA Dependencies: analisis de dependencias con OWASP Dependency-Check - EXITOSA
+5. Security Test - DAST ZAP: escaneo dinamico OWASP ZAP contra la app desplegada - EXITOSA
+6. Trazabilidad y Documentacion: generacion de este registro - EXITOSA
+
+## Artefactos Generados
+- dependency-check-report.html / .xml (resultado del escaneo SCA)
+- zap_report.html / .json (resultado del escaneo DAST)
+- results.xml (resultado de pruebas unitarias)
+- trazabilidad_build_${BUILD_NUMBER}.md (este documento)
+
+## Vulnerabilidades Corregidas (Codigo Fuente)
+- Inyeccion SQL en login (CWE-89): consulta parametrizada en vez de f-string concatenado
+- Flask en modo debug activo (CWE-94): cambiado a debug=False
+- IDOR en eliminacion de tareas: validacion de propietario (WHERE id = ? AND user_id = ?)
+- Cabeceras de seguridad HTTP ausentes (CWE-693): CSP, X-Frame-Options, X-Content-Type-Options, Permissions-Policy, Cross-Origin-*-Policy agregadas via @app.after_request
+
+## Gestion de Dependencias
+- Dependabot alerts y security updates activados en GitHub
+- Archivo .github/dependabot.yml configurado (revision semanal, ecosistema pip)
+- Snapshot de requirements.txt vigente en este build:
+$(cat ${WORKSPACE}/requirements.txt | sed 's/^/  - /')
+- Ver detalle completo en DEPENDENCY_MANAGEMENT.md y SDLC_SECURITY_DOCUMENTATION.md
+
+## Monitorizacion
+- Metricas expuestas via /metrics (prometheus_client en la app Flask)
+- Prometheus recolectando metricas del contenedor ev3-app (scrape cada 15s)
+- Dashboard Grafana con paneles de estado de servicios y tasa de peticiones HTTP por endpoint
+EOF
+
+          cat "$F"
         '''
         archiveArtifacts(
           artifacts        : 'docs-report/*.md',
