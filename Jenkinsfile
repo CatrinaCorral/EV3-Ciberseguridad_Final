@@ -74,14 +74,6 @@ pipeline {
               --project EV3-Ciberseguridad \
               --noupdate || true
 
-          docker run --rm \
-            -v dc-report-vol:/report \
-            alpine ls -la /report/ || true
-
-          docker run --rm \
-            -v dc-report-vol:/report \
-            alpine cat /report/dependency-check-report.xml || true
-
           mkdir -p \${WORKSPACE}/dc-report
         """
 
@@ -90,9 +82,6 @@ pipeline {
             -v dc-report-vol:/report \
             -v ${WORKSPACE}/dc-report:/dest \
             alpine sh -c 'cp /report/*.html /dest/ 2>/dev/null || true; cp /report/*.xml /dest/ 2>/dev/null || true; chmod 644 /dest/* 2>/dev/null || true'
-
-          echo "=== Archivos copiados al workspace ==="
-          ls -la ${WORKSPACE}/dc-report/ || true
         '''
 
         publishHTML(target: [
@@ -116,13 +105,11 @@ pipeline {
             -v zap-report-vol:/zap/wrk \
             alpine sh -c 'chmod 777 /zap/wrk'
 
-          echo "=== Probando acceso a la aplicacion ==="
           docker run --rm \
             --network devsecops-network \
             curlimages/curl:latest \
             -sf http://ev3-app:5000 || echo "App no responde"
 
-          echo "=== Ejecutando OWASP ZAP Baseline Scan ==="
           docker run --rm \
             -u root \
             --network devsecops-network \
@@ -133,11 +120,6 @@ pipeline {
                 -r zap_report.html \
                 -J zap_report.json \
                 --auto || true
-
-          echo "=== Contenido volumen ZAP ==="
-          docker run --rm \
-            -v zap-report-vol:/zap/wrk \
-            alpine ls -la /zap/wrk || true
 
           rm -rf \${WORKSPACE}/zap-reports
           mkdir -p \${WORKSPACE}/zap-reports
@@ -152,9 +134,6 @@ pipeline {
           docker rm zap-copy || true
 
           chmod 644 \${WORKSPACE}/zap-reports/* 2>/dev/null || true
-
-          echo "=== Contenido zap-reports en workspace ==="
-          ls -la \${WORKSPACE}/zap-reports/ || true
         """
 
         publishHTML(target: [
@@ -165,8 +144,6 @@ pipeline {
           reportFiles          : 'zap_report.html',
           reportName           : 'OWASP ZAP Report'
         ])
-
-        sh 'find ${WORKSPACE} -name "*.html" -o -name "*.xml" -o -name "*.json" 2>/dev/null | head -30'
       }
     }
 
@@ -186,6 +163,9 @@ pipeline {
           echo "- Deploy - Staging: contenedor desplegado en devsecops-network" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
           echo "- Security Test - SCA Dependencies: ver dependency-check-report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
           echo "- Security Test - DAST ZAP: ver zap_report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "## Gestion de dependencias (snapshot de requirements.txt en este build)" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          cat ${WORKSPACE}/requirements.txt | sed 's/^/- /' >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
           echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
           echo "## Documentacion asociada del repositorio" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
           echo "- DEPENDENCY_MANAGEMENT.md" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
