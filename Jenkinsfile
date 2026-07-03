@@ -169,6 +169,47 @@ pipeline {
         sh 'find ${WORKSPACE} -name "*.html" -o -name "*.xml" -o -name "*.json" 2>/dev/null | head -30'
       }
     }
+
+    stage('Generate Documentation') {
+      steps {
+        sh '''
+          mkdir -p ${WORKSPACE}/docs-report
+
+          echo "==============================================" >  ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "# Trazabilidad de Seguridad - Build #${BUILD_NUMBER}" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "Fecha: $(date)" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "Commit: ${GIT_COMMIT}" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "## Etapas ejecutadas en este build" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- Build: imagen ev3-ciberseguridad_final:${BUILD_NUMBER} construida" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- Test - Unit: resultados en results.xml" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- Deploy - Staging: contenedor desplegado en devsecops-network" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- Security Test - SCA Dependencies: ver dependency-check-report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- Security Test - DAST ZAP: ver zap_report.html" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "## Documentacion asociada del repositorio" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- DEPENDENCY_MANAGEMENT.md" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "- SDLC_SECURITY_DOCUMENTATION.md" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+          echo "==============================================" >> ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+
+          cat ${WORKSPACE}/docs-report/trazabilidad_build_${BUILD_NUMBER}.md
+        '''
+      }
+    }
+
+    stage('Version Control - Docs') {
+      steps {
+        sh '''
+          echo "=== Versionando documentacion generada para build #${BUILD_NUMBER} ==="
+          ls -la ${WORKSPACE}/docs-report/
+          echo "El archivo de trazabilidad queda archivado como artefacto versionado por numero de build."
+        '''
+        archiveArtifacts(
+          artifacts        : 'docs-report/*.md',
+          allowEmptyArchive: true
+        )
+      }
+    }
   }
 
   post {
