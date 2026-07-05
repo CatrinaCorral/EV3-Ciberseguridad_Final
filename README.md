@@ -2,15 +2,16 @@ EV3-Ciberseguridad_Final
 
 Descripción
 
-Este proyecto implementa un pipeline de DevSecOps que integra prácticas de seguridad a lo largo del ciclo de vida del desarrollo de software (SDLC). La solución incorpora automatización de compilación, pruebas, análisis de seguridad, gestión de dependencias, monitorización y generación de evidencia de trazabilidad mediante Jenkins y herramientas de código abierto.
+Este proyecto corresponde a la implementación de un entorno DevSecOps, integrando prácticas de seguridad dentro del ciclo de vida del desarrollo de software (SDLC). El objetivo es automatizar el proceso de desarrollo, pruebas y despliegue, incorporando controles de seguridad, gestión de dependencias, monitorización y trazabilidad de manera continua.
 
-Objetivos
+Características principales
 
-- Automatizar el proceso de integración y despliegue continuo (CI/CD).
-- Detectar y corregir vulnerabilidades de seguridad durante el desarrollo.
-- Gestionar de forma segura las dependencias del proyecto.
-- Mantener evidencia de auditoría mediante documentación y trazabilidad automatizadas.
-- Monitorizar el comportamiento de la aplicación en ejecución.
+- Pipeline de Integración y Despliegue Continuo (CI/CD).
+- Automatización de pruebas.
+- Integración de herramientas de seguridad.
+- Gestión de dependencias.
+- Monitorización de la aplicación.
+- Generación de documentación y evidencia de cada ejecución.
 
 Tecnologías utilizadas
 
@@ -19,77 +20,17 @@ Tecnologías utilizadas
 - Docker
 - Jenkins
 - GitHub
-- OWASP Dependency-Check
 - OWASP ZAP
+- OWASP Dependency-Check
 - Bandit
 - Pytest
 - Prometheus
 - Grafana
-- Dependabot
-
-Pipeline de CI/CD
-
-El pipeline implementado automatiza las siguientes etapas:
-
-1. Obtención del código fuente desde GitHub.
-2. Construcción de la imagen Docker.
-3. Ejecución de pruebas unitarias.
-4. Despliegue en un entorno de staging.
-5. Análisis de dependencias (SCA).
-6. Análisis dinámico de seguridad (DAST).
-7. Generación automática de documentación y trazabilidad del build.
-
-Seguridad implementada
-
-Durante el desarrollo se identificaron y mitigaron distintas vulnerabilidades, incluyendo:
-
-- Protección contra SQL Injection mediante consultas parametrizadas.
-- Desactivación del modo debug en producción.
-- Validación de acceso para prevenir vulnerabilidades de tipo IDOR.
-- Incorporación de cabeceras HTTP de seguridad recomendadas.
-- Actualización de dependencias vulnerables mediante Dependabot y OWASP Dependency-Check.
-
-La estrategia de seguridad combina:
-
-- SAST: Bandit.
-- SCA: OWASP Dependency-Check.
-- DAST: OWASP ZAP.
-
-Gestión de dependencias
-
-Las dependencias del proyecto se mantienen mediante:
-
-- Versionado controlado en "requirements.txt".
-- Supervisión automática con Dependabot.
-- Verificación continua durante cada ejecución del pipeline utilizando OWASP Dependency-Check.
-
-Monitorización
-
-El entorno incorpora:
-
-- Prometheus para la recolección de métricas.
-- Grafana para la visualización del estado del sistema y métricas de la aplicación.
-
-Esta monitorización permite detectar comportamientos anómalos y verificar el estado de los servicios en tiempo real.
-
-Documentación y trazabilidad
-
-Cada ejecución del pipeline genera automáticamente evidencia del proceso, incluyendo:
-
-- Reportes de pruebas.
-- Resultados de análisis de seguridad.
-- Reportes de dependencias.
-- Archivo de trazabilidad del build.
-- Historial de cambios mediante Git y GitHub.
-
-Esto facilita auditorías, mantenimiento y seguimiento de la evolución del proyecto.
 
 Estructura del proyecto
 
 .
 ├── .github/
-│   └── dependabot.yml
-├── docs/
 ├── Jenkinsfile
 ├── Dockerfile
 ├── docker-compose.yml
@@ -97,17 +38,18 @@ Estructura del proyecto
 ├── prometheus.yml
 ├── requirements.txt
 ├── vulnerable_app.py
+├── README.md
 ├── DEPENDENCY_MANAGEMENT.md
-└── README.md
+└── SDLC_SECURITY_DOCUMENTATION.md
 
-Documentación adicional
+Documentación
 
-Para información detallada sobre la implementación de seguridad y la gestión de dependencias, consultar:
+El proyecto incluye la siguiente documentación:
 
-- "DEPENDENCY_MANAGEMENT.md"
-- Documentación de trazabilidad del proyecto.
-- Reportes generados por Jenkins en cada ejecución del pipeline.
+- README.md: descripción general del proyecto.
+- SDLC_SECURITY_DOCUMENTATION.md: documentación del proceso de seguridad, trazabilidad y actividades realizadas durante el SDLC.
+- DEPENDENCY_MANAGEMENT.md: gestión de dependencias y actualizaciones de seguridad.
 
-Autor
+Objetivo
 
-Proyecto desarrollado como parte de la evaluación EV3 – Ciberseguridad, aplicando prácticas de DevSecOps, automatización de pruebas y seguridad en el ciclo de vida del desarrollo de software.
+Demostrar la aplicación de prácticas de DevSecOps mediante la integración de herramientas y procesos que permitan mejorar la seguridad, automatizar las validaciones y mantener la trazabilidad durante el desarrollo de software.
